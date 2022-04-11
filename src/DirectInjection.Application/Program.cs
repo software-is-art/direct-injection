@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using DirectInjection;
 using DirectInjection.Application;
 [assembly:Bind(
-    typeof(Binding<IFoo, Foo>),
+    typeof(Binding<IFoo, FooClass>),
     typeof(Binding<IBar, BarOne>),
     typeof(Binding<IBaz, BazOne>)
 )]
