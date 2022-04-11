@@ -1,9 +1,9 @@
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DirectInjection;
-
 public static class Extensions
 {
     public static string Namespace(this ParameterListSyntax parameter) => parameter.Ancestors()
@@ -25,7 +25,7 @@ public static class Extensions
         {
             return record.Identifier.ToFullString();
         }
-
+        Debug.Break();
         throw new Exception();
     }
 }

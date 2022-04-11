@@ -1,6 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Collections.Immutable;
 using DirectInjection;
 using DirectInjection.Application;
 [assembly:Bind(
