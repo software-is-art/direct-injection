@@ -12,4 +12,10 @@
         <ProjectReference Include="..\DirectInjection.Generator\DirectInjection.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    </ItemGroup>
+
 </Project>
