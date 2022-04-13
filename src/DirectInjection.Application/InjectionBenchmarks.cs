@@ -20,7 +20,6 @@ namespace DirectInjection.Application;
 public class InjectionBenchmarks
 {
     private static IServiceProvider MicrosoftDI { get; }
-    private static IInstanceProvider DirectInjectionProvider { get; }
     private static AutofacServiceProvider AutofacProvider { get; }
     private static IKernel NinjectKernel { get; }
     static InjectionBenchmarks()
@@ -49,8 +48,6 @@ public class InjectionBenchmarks
         kernel.Bind<IBar>().To<BarOne>().InTransientScope();
         kernel.Bind<IBaz>().To<BazOne>().InTransientScope();
         NinjectKernel = kernel;
-        
-        DirectInjectionProvider = new InstanceProvider();
     }
 
     [Benchmark]
@@ -74,7 +71,7 @@ public class InjectionBenchmarks
     [Benchmark]
     public IFoo DirectInjection()
     {
-        return DirectInjectionProvider.Get<IFoo>();
+        return InstanceProvider.Activate(default(IFoo));
     }
 
     [Benchmark(Baseline = true)]

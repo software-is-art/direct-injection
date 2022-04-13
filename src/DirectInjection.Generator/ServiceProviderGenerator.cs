@@ -43,7 +43,7 @@ namespace DirectInjection.Generated
             {{
                 {string.Join(Environment.NewLine, explicitBindings.Select(b => {
                     var contract = b.Value;
-                    return $"var x when x == typeof({contract}) => (TType)Activate_{contract.Replace(".", "_")}(),";
+                    return $"var x when x == typeof({contract}) => (TType)Activate(default({contract})),";
                 }))}
                 _ => throw new Exception()
             }};
@@ -57,8 +57,8 @@ namespace DirectInjection.Generated
             // Cheating here until we can load in fully qualified names for the contracts
             return @$"
 [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-private static {contract} Activate_{contract.Replace(".", "_")}() {{
-                return new {provided}({string.Join(",", parameters.Select(p => $"Activate_DirectInjection_Application_{p.Replace(".", "_")}()"))});
+public static {contract} Activate(in {contract} result) {{
+                return new {provided}({string.Join(",", parameters.Select(p => $"Activate(default(DirectInjection.Application.{p}))"))});
             }}";
         }))}
     }}
