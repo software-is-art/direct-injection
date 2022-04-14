@@ -20,16 +20,28 @@ public class ServiceProviderGenerator : ISourceGenerator
     {
         var explicitBindings = GetExplicitBindings(context);
         var constructorsWithNonZeroArity = context.Compilation.SyntaxTrees
-            .SelectMany(s => s.GetRoot().DescendantNodes()).Where(n =>
-                n.IsKind(SyntaxKind.ParameterList) && (
-                    n.Parent.IsKind(SyntaxKind.RecordDeclaration) ||
-                    n.Parent.IsKind(SyntaxKind.RecordStructDeclaration) ||
-                    n.Parent.IsKind(SyntaxKind.ConstructorDeclaration)
-                )).Cast<ParameterListSyntax>()
-            .ToImmutableArray();
-        var namespaces = constructorsWithNonZeroArity
-            .Select(c => new KeyValuePair<string, ImmutableArray<string?>>($"{c.Namespace()}.{c.Identifier()}",
-                c.Parameters.Select(p => p.Type?.ToFullString()).ToImmutableArray()))
+            .SelectMany(s => s.GetRoot().DescendantNodes().Select(n => (context.Compilation.GetSemanticModel(s), n)))
+            .Where(sn =>
+            {
+                var (_, syntaxNode) = sn;
+                return syntaxNode.IsKind(SyntaxKind.ParameterList) &&
+                       (
+                           syntaxNode.Parent.IsKind(SyntaxKind.RecordDeclaration) ||
+                           syntaxNode.Parent.IsKind(SyntaxKind.RecordStructDeclaration) ||
+                           syntaxNode.Parent.IsKind(SyntaxKind.ConstructorDeclaration)
+                       );
+            }).ToImmutableArray();
+        //Debug.Break();
+        var constructors = constructorsWithNonZeroArity
+            .Select(sn =>
+            {
+                var (semanticModel, syntaxNode) = sn;
+                var parameterListSyntax = (ParameterListSyntax) syntaxNode;
+                return new KeyValuePair<string, ImmutableArray<string?>>($"{parameterListSyntax.Namespace()}.{parameterListSyntax.Identifier()}",
+                    parameterListSyntax.Parameters.Select(p =>
+                        $"{semanticModel.GetTypeInfo(p.Type).ConvertedType.ToDisplayString()}"
+                    ).ToImmutableArray());
+            })
             .ToImmutableDictionary();
         var source = $@"
 namespace DirectInjection.Generated
@@ -51,14 +63,13 @@ namespace DirectInjection.Generated
         {string.Join(Environment.NewLine, explicitBindings.Select(kvp => {
             var provided = kvp.Key;
             var contract = kvp.Value;
-            if (!namespaces.TryGetValue(provided, out var parameters)) {
+            if (!constructors.TryGetValue(provided, out var parameters)) {
                 parameters = ImmutableArray<string?>.Empty;
             }
-            // Cheating here until we can load in fully qualified names for the contracts
             return @$"
 [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 public static {contract} Activate(in {contract} result) {{
-                return new {provided}({string.Join(",", parameters.Select(p => $"Activate(default(DirectInjection.Application.{p}))"))});
+                return new {provided}({string.Join(",", parameters.Select(p => $"Activate(default({p}))"))});
             }}";
         }))}
     }}
