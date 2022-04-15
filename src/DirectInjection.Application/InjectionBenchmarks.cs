@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Ninject;
 
 [assembly:Bind(
-    typeof(Transient<IFoo, FooClass>),
+    typeof(Scoped<IFoo, FooClass>),
     typeof(Transient<IBar, BarOne>),
     typeof(Transient<IBaz, BazOne>)
 )]
@@ -21,6 +21,8 @@ public class InjectionBenchmarks
 {
     private static IServiceProvider MicrosoftDI { get; }
     private static AutofacServiceProvider AutofacProvider { get; }
+    
+    private static IInstanceProvider DirectInjectionProvider { get; }
     private static IKernel NinjectKernel { get; }
     static InjectionBenchmarks()
     {
@@ -48,30 +50,36 @@ public class InjectionBenchmarks
         kernel.Bind<IBar>().To<BarOne>().InTransientScope();
         kernel.Bind<IBaz>().To<BazOne>().InTransientScope();
         NinjectKernel = kernel;
+
+        DirectInjectionProvider = new DirectInjection.Generated.InstanceProvider();
     }
 
     [Benchmark]
     public IFoo Ninject()
     {
-        return NinjectKernel.Get<IFoo>();
+        using var scope = NinjectKernel.CreateScope();
+        return scope.ServiceProvider.GetService<IFoo>();
     }
 
     [Benchmark]
     public IFoo Autofac()
     {
-        return AutofacProvider.GetService<IFoo>();
+        using var scope = AutofacProvider.CreateScope();
+        return scope.ServiceProvider.GetService<IFoo>();
     }
 
     [Benchmark]
     public IFoo MicrosoftDependencyInjection()
     {
-        return MicrosoftDI.GetService<IFoo>();
+        using var scope = MicrosoftDI.CreateScope();
+        return scope.ServiceProvider.GetService<IFoo>();
     }
 
     [Benchmark]
     public IFoo DirectInjection()
     {
-        return InstanceProvider.Activate(default(IFoo));
+        using var scope = DirectInjectionProvider.GetScope();
+        return scope.Get<IFoo>();
     }
 
     [Benchmark(Baseline = true)]
