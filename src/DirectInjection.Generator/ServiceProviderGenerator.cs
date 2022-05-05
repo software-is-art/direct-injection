@@ -45,11 +45,13 @@ public class ServiceProviderGenerator : ISourceGenerator
                     ).ToImmutableArray());
             })
             .ToImmutableDictionary();
+        var activationLockIdentifier = "activationLock";
         var source = $@"
 namespace DirectInjection.Generated
 {{
 
     internal class Scope : DirectInjection.IScope {{
+            private readonly object {activationLockIdentifier} = new object();
             private int disposed;
 
             ~Scope() {{
@@ -108,17 +110,16 @@ namespace DirectInjection.Generated
                 }
                 var propertyIdentifier = $"scoped_{contract.Replace(".", "_")}";
                 var setIdentifier = $"{propertyIdentifier}Set";
-                var lockIdentifier = $"{propertyIdentifier}Lock";
                 return @$"
-                    private readonly object {lockIdentifier} = new object();
                     private bool {setIdentifier};
                     private {contract} {propertyIdentifier};
                     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
                     private static {contract} Activate(Scope scope, in {contract} result) {{
                         if (!scope.{setIdentifier}) {{
-                            lock (scope.{lockIdentifier}) {{
+                            lock (scope.{activationLockIdentifier}) {{
                                 if (!scope.{setIdentifier}) {{
                                    scope.{propertyIdentifier} = new {provided}({string.Join(",", parameters.Select(p => $"Activate(scope, default({p}))"))});
+                                   scope.{setIdentifier} = true;
                                 }}
                             }}
                         }}
