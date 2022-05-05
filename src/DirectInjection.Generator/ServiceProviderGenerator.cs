@@ -38,7 +38,8 @@ public class ServiceProviderGenerator : ISourceGenerator
             {
                 var (semanticModel, syntaxNode) = sn;
                 var parameterListSyntax = (ParameterListSyntax) syntaxNode;
-                return new KeyValuePair<string, ImmutableArray<string?>>($"{parameterListSyntax.Namespace()}.{parameterListSyntax.Identifier()}",
+                return new KeyValuePair<string, ImmutableArray<string?>>(
+                    $"{parameterListSyntax.Namespace()}.{parameterListSyntax.Identifier()}",
                     parameterListSyntax.Parameters.Select(p =>
                         $"{semanticModel.GetTypeInfo(p.Type).ConvertedType.ToDisplayString()}"
                     ).ToImmutableArray());
@@ -59,9 +60,15 @@ namespace DirectInjection.Generated
                 if (disposed != 0 || Interlocked.Increment(ref disposed) != 1) {{
                     return;
                 }}
-
-                
-                
+                {string.Join(Environment.NewLine, bindings.Scoped.Select(kvp => {
+                    var contract = kvp.Value;
+                    var propertyIdentifier = $"scoped_{contract.Replace(".", "_")}";
+                    var setIdentifier = $"{propertyIdentifier}Set";
+                    var disposeVar = $"{propertyIdentifier}Dispose";
+                    return @$"if ({setIdentifier} && {propertyIdentifier} is System.IDisposable {disposeVar}) {{
+                                    {disposeVar}.Dispose();
+                            }}";
+                }))}
                 if (!isFinalizer) {{
                     GC.SuppressFinalize(true);
                 }}
