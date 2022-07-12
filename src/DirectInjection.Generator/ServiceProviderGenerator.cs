@@ -12,40 +12,50 @@ namespace DirectInjection;
 [Generator]
 public class ServiceProviderGenerator : ISourceGenerator
 {
-    public void Initialize(GeneratorInitializationContext context)
-    {
-    }
+    public void Initialize(GeneratorInitializationContext context) { }
 
     public void Execute(GeneratorExecutionContext context)
     {
         //Debug.Break();
         var bindings = GetExplicitBindings(context);
         var constructorsWithNonZeroArity = context.Compilation.SyntaxTrees
-            .SelectMany(s => s.GetRoot().DescendantNodes().Select(n => (context.Compilation.GetSemanticModel(s), n)))
+            .SelectMany(
+                s =>
+                    s.GetRoot()
+                        .DescendantNodes()
+                        .Select(n => (context.Compilation.GetSemanticModel(s), n))
+            )
             .Where(sn =>
             {
                 var (_, syntaxNode) = sn;
-                return syntaxNode.IsKind(SyntaxKind.ParameterList) &&
-                       (
-                           syntaxNode.Parent.IsKind(SyntaxKind.RecordDeclaration) ||
-                           syntaxNode.Parent.IsKind(SyntaxKind.RecordStructDeclaration) ||
-                           syntaxNode.Parent.IsKind(SyntaxKind.ConstructorDeclaration)
-                       );
-            }).ToImmutableArray();
+                return syntaxNode.IsKind(SyntaxKind.ParameterList)
+                    && (
+                        syntaxNode.Parent.IsKind(SyntaxKind.RecordDeclaration)
+                        || syntaxNode.Parent.IsKind(SyntaxKind.RecordStructDeclaration)
+                        || syntaxNode.Parent.IsKind(SyntaxKind.ConstructorDeclaration)
+                    );
+            })
+            .ToImmutableArray();
         //Debug.Break();
         var constructors = constructorsWithNonZeroArity
             .Select(sn =>
             {
                 var (semanticModel, syntaxNode) = sn;
-                var parameterListSyntax = (ParameterListSyntax) syntaxNode;
-                return new KeyValuePair<string, ImmutableArray<string?>>($"{parameterListSyntax.Namespace()}.{parameterListSyntax.Identifier()}",
-                    parameterListSyntax.Parameters.Select(p =>
-                        $"{semanticModel.GetTypeInfo(p.Type).ConvertedType.ToDisplayString()}"
-                    ).ToImmutableArray());
+                var parameterListSyntax = (ParameterListSyntax)syntaxNode;
+                return new KeyValuePair<string, ImmutableArray<string?>>(
+                    $"{parameterListSyntax.Namespace()}.{parameterListSyntax.Identifier()}",
+                    parameterListSyntax.Parameters
+                        .Select(
+                            p =>
+                                $"{semanticModel.GetTypeInfo(p.Type).ConvertedType.ToDisplayString()}"
+                        )
+                        .ToImmutableArray()
+                );
             })
             .ToImmutableDictionary();
         var activationLockIdentifier = "activationLock";
-        var source = $@"
+        var source =
+            $@"
 namespace DirectInjection.Generated
 {{
 
@@ -158,8 +168,12 @@ namespace DirectInjection.Generated
         File.WriteAllText("/Users/callum/Debug.cs", source);
         context.AddSource("InstanceProvider.cs", SourceText.From(source, Encoding.UTF8));
     }
-    
-    private string ScopedActivator(string? contract, string? provided, ImmutableArray<string?> parameters)
+
+    private string ScopedActivator(
+        string? contract,
+        string? provided,
+        ImmutableArray<string?> parameters
+    )
     {
         return @$"
                 [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -168,7 +182,11 @@ namespace DirectInjection.Generated
                 }}";
     }
 
-    private string NonScopedActivator(string? contract, string? provided, ImmutableArray<string?> parameters)
+    private string NonScopedActivator(
+        string? contract,
+        string? provided,
+        ImmutableArray<string?> parameters
+    )
     {
         return @$"
                 [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -180,7 +198,10 @@ namespace DirectInjection.Generated
     private Bindings GetExplicitBindings(GeneratorExecutionContext context)
     {
         var attributes = context.Compilation.Assembly
-            .GetAttributes().FirstOrDefault(t => t.AttributeClass?.ToDisplayString() == "DirectInjection.BindAttribute");
+            .GetAttributes()
+            .FirstOrDefault(
+                t => t.AttributeClass?.ToDisplayString() == "DirectInjection.BindAttribute"
+            );
         if (attributes == default)
         {
             return Bindings.Empty;
@@ -207,10 +228,12 @@ namespace DirectInjection.Generated
 
     private class Bindings
     {
-        public static Bindings Empty { get; } = new (
-            ImmutableDictionary<string, string>.Empty,
-            ImmutableDictionary<string, string>.Empty
-        );
+        public static Bindings Empty { get; } =
+            new(
+                ImmutableDictionary<string, string>.Empty,
+                ImmutableDictionary<string, string>.Empty
+            );
+
         public Bindings(
             ImmutableDictionary<string, string> transient,
             ImmutableDictionary<string, string> scoped
@@ -219,6 +242,7 @@ namespace DirectInjection.Generated
             Transient = transient;
             Scoped = scoped;
         }
+
         public ImmutableDictionary<string, string> Transient { get; }
         public ImmutableDictionary<string, string> Scoped { get; }
 

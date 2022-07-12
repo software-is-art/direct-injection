@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Ninject;
 
-[assembly:Bind(
+[assembly: Bind(
     typeof(Scoped<IFoo, FooClass>),
     typeof(Transient<IBar, BarOne>),
     typeof(Transient<IBaz, BazOne>)
@@ -21,29 +21,33 @@ public class InjectionBenchmarks
 {
     private static IServiceProvider MicrosoftDI { get; }
     private static AutofacServiceProvider AutofacProvider { get; }
-    
+
     private static IInstanceProvider DirectInjectionProvider { get; }
     private static IKernel NinjectKernel { get; }
+
     static InjectionBenchmarks()
     {
         // Microsoft DI Setup
         IServiceCollection collection = null;
         MicrosoftDI = Host.CreateDefaultBuilder()
-            .ConfigureServices((_, services) =>
-            {
-                collection = services;
-                services.AddTransient<IFoo, FooClass>()
-                    .AddTransient<IBar, BarOne>()
-                    .AddTransient<IBaz, BazOne>();
-            })
+            .ConfigureServices(
+                (_, services) =>
+                {
+                    collection = services;
+                    services
+                        .AddTransient<IFoo, FooClass>()
+                        .AddTransient<IBar, BarOne>()
+                        .AddTransient<IBaz, BazOne>();
+                }
+            )
             .Build()
             .Services;
-        
+
         // Autofac setup
         var builder = new ContainerBuilder();
         builder.Populate(collection);
         AutofacProvider = new AutofacServiceProvider(builder.Build());
-        
+
         // Ninject setup
         var kernel = new StandardKernel();
         kernel.Bind<IFoo>().To<FooClass>().InTransientScope();

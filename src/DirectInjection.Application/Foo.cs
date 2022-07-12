@@ -6,6 +6,7 @@ public interface IFoo
 {
     void Do();
 }
+
 public record FooRecord(IBar Bar, IBaz Baz) : IFoo
 {
     public void Do()
@@ -19,6 +20,7 @@ public class FooClass : IFoo
 {
     public IBar Bar { get; }
     public IBaz Baz { get; }
+
     public FooClass(IBar bar, IBaz baz)
     {
         Bar = bar;

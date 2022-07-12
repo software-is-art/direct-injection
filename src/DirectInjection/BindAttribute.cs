@@ -6,6 +6,7 @@ namespace DirectInjection;
 public class BindAttribute : Attribute
 {
     public ImmutableArray<Type> Bindings { get; }
+
     public BindAttribute(params Type[] bindings)
     {
         Bindings = bindings.ToImmutableArray();
