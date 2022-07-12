@@ -71,9 +71,15 @@ namespace DirectInjection.Generated
                 if (disposed != 0 || Interlocked.Increment(ref disposed) != 1) {{
                     return;
                 }}
-
-                
-                
+                {string.Join(Environment.NewLine, bindings.Scoped.Select(kvp => {
+                    var contract = kvp.Value;
+                    var propertyIdentifier = $"scoped_{contract.Replace(".", "_")}";
+                    var setIdentifier = $"{propertyIdentifier}Set";
+                    var disposeVar = $"{propertyIdentifier}Dispose";
+                    return @$"if ({setIdentifier} && {propertyIdentifier} is System.IDisposable {disposeVar}) {{
+                                    {disposeVar}.Dispose();
+                            }}";
+                }))}
                 if (!isFinalizer) {{
                     GC.SuppressFinalize(true);
                 }}
