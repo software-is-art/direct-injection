@@ -171,7 +171,7 @@ namespace DirectInjection.Generated
     }}
 }}";
         //Debug.Break();
-        File.WriteAllText("/Users/callum/Debug.cs", source);
+        File.WriteAllText("/workspaces/direct-injection/Debug.cs", source);
         context.AddSource("InstanceProvider.cs", SourceText.From(source, Encoding.UTF8));
     }
 
