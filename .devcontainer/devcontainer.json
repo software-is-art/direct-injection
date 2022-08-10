@@ -1,0 +1,9 @@
+{
+    "image" : "mcr.microsoft.com/vscode/devcontainers/dotnet:6.0",
+    "extensions": [
+        "projektanker.code-butler",
+        "hbenl.vscode-test-explorer",
+        "ms-dotnettools.csharp",
+        "eamodio.gitlens"
+    ]
+}
