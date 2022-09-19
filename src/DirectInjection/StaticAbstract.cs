@@ -16,12 +16,52 @@ namespace Factory
     {
         public static Bar New(Bar? contract = default)
         {
+            CombinedFactory<TDependencies>.New(default(Bar));
+            CombinedFactory<TDependencies>.New(default(Foo));
             return new Bar(TDependencies.Get());
         }
 
         public static Foo New(Foo? contract = default)
         {
             return new Foo();
+        }
+    }
+
+    public class CombinedFactory<TDependecies>
+        : Combine<FooFactory, Foo, BarFactory<TDependecies>, Bar>
+        where TDependecies : IDependency<IFoo, Static> { }
+
+    public class FooFactory : IFactory<Foo>
+    {
+        public static Foo New(Foo? contract = default)
+        {
+            return new Foo();
+        }
+    }
+
+    public class BarFactory<TDependencies> : IFactory<Bar>
+        where TDependencies : IDependency<IFoo, Static>
+    {
+        public static Bar New(Bar? contract = default)
+        {
+            return new Bar(TDependencies.Get());
+        }
+    }
+
+    public class Combine<TFactoryA, TTypeA, TFactoryB, TTypeB>
+        : CombineB<TFactoryB, TTypeB>,
+            IFactory<TTypeA>
+        where TFactoryA : IFactory<TTypeA>
+        where TFactoryB : IFactory<TTypeB>
+    {
+        public static TTypeA New(TTypeA? activation = default) => TFactoryA.New();
+    }
+
+    public class CombineB<TFactoryB, TTypeB> : IFactory<TTypeB> where TFactoryB : IFactory<TTypeB>
+    {
+        public static TTypeB New(TTypeB? activation = default)
+        {
+            throw new NotImplementedException();
         }
     }
 
