@@ -1,5 +1,5 @@
 {
-    "dockerFile": "Dockerfile",
+    "image": "mcr.microsoft.com/dotnet/sdk:6.0",
     "extensions": [
         "projektanker.code-butler",
         "hbenl.vscode-test-explorer",
